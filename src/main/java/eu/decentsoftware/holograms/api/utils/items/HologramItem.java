@@ -182,12 +182,12 @@ public class HologramItem {
         }
         return string;
     }
-    
+
     /**
      * Takes the provided ItemStack and converts it into a usable HologramItem instance.<br>
      * This is done by converting the ItemStack values into a String equal to what is used when adding an Item to
      * a Hologram Page (i.e. {@code PLAYER_HEAD (Steve)} or {@code DIAMOND_SWORD !ENCHANTED}.
-     * 
+     *
      * <p><b>IMPORTANT NOTE!</b><br>
      * Due to limitations in the parsing does this method only use specific values, namely:
      * <ul>
@@ -197,7 +197,7 @@ public class HologramItem {
      *     <li>Skull Owner/Texture (Texture is prioritized)</li>
      *     <li>CustomModelData (custom_model_data on newer MC versions).</li>
      * </ul>
-     * 
+     *
      * @param itemStack The Item to convert into a HologramItem.
      * @return Usable HologramItem instance with data from the provided ItemStack.
      */
@@ -229,20 +229,30 @@ public class HologramItem {
         }
 
         ReadWriteNBT nbtItem = NBT.itemStackToNBT(itemStack);
+
         int customModelData;
-        if (Version.afterOrEqual(Version.v1_20_R4)) {
+
+        if (Version.afterOrEqual(Version.v1_21_R3)) {
+            // New customModelData
+            customModelData = Math.round(
+                    nbtItem.getOrCreateCompound("components")
+                            .getOrCreateCompound("minecraft:custom_model_data")
+                            .getFloatList("floats")
+                            .get(0)
+            );
+        } else if (Version.afterOrEqual(Version.v1_20_R4)) {
             // components contains item tags in 1.20.5+
             customModelData = nbtItem.getOrCreateCompound("components")
-                .getInteger("minecraft:custom_model_data");
+                    .getInteger("minecraft:custom_model_data");
         } else {
             // 1.20.4 and older have CMD under "tag".
-            customModelData = nbtItem.getOrCreateCompound("tag")
-                .getInteger("CustomModelData");
+            customModelData = nbtItem.getOrCreateCompound("tag").getInteger("CustomModelData");
         }
 
         if (customModelData > 0) {
             stringBuilder.append("{CustomModelData:").append(customModelData).append('}');
         }
+
         return new HologramItem(stringBuilder.toString());
     }
 
